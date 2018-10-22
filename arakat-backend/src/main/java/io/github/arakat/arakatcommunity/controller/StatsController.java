@@ -2,6 +2,7 @@ package io.github.arakat.arakatcommunity.controller;
 
 import io.github.arakat.arakatcommunity.config.AppPropertyValues;
 import io.github.arakat.arakatcommunity.job.DAGStatsCheckerJob;
+import io.github.arakat.arakatcommunity.job.TaskStatsCheckerJob;
 import io.github.arakat.arakatcommunity.service.StatsService;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ public class StatsController {
         JobDataMap dagStatJobDataMap = new JobDataMap();
         dagStatJobDataMap.put("dagId", dagId);
 
-        JobDetail jobDetail = createJobDetail("dag-stat-jobs", "Get DAG Stats Job", dagStatJobDataMap);
+        JobDetail jobDetail = createDagJobDetail(dagStatJobDataMap);
         Trigger trigger = createTrigger(jobDetail, "dag-stat-triggers", "Get DAG Stats Trigger");
 
         scheduler.scheduleJob(jobDetail, trigger);
@@ -66,16 +67,25 @@ public class StatsController {
         JobDataMap taskStatJobDataMap = new JobDataMap();
         taskStatJobDataMap.put("taskId", taskId);
 
-        JobDetail jobDetail = createJobDetail("task-stat-jobs", "Get task Stats Job", taskStatJobDataMap);
+        JobDetail jobDetail = createTaskJobDetail(taskStatJobDataMap);
         Trigger trigger = createTrigger(jobDetail, "task-stat-triggers", "Get task Stats Trigger");
 
         scheduler.scheduleJob(jobDetail, trigger);
     }
 
-    private JobDetail createJobDetail(String group, String description, JobDataMap jobDataMap) {
+    private JobDetail createDagJobDetail(JobDataMap jobDataMap) {
         return JobBuilder.newJob(DAGStatsCheckerJob.class)
-                .withIdentity(UUID.randomUUID().toString(), group)
-                .withDescription(description)
+                .withIdentity(UUID.randomUUID().toString(), "dag-stat-jobs")
+                .withDescription("Get DAG Stats Job")
+                .usingJobData(jobDataMap)
+                .storeDurably()
+                .build();
+    }
+
+    private JobDetail createTaskJobDetail(JobDataMap jobDataMap) {
+        return JobBuilder.newJob(TaskStatsCheckerJob.class)
+                .withIdentity(UUID.randomUUID().toString(), "task-stat-jobs")
+                .withDescription("Get task Stats Job")
                 .usingJobData(jobDataMap)
                 .storeDurably()
                 .build();
