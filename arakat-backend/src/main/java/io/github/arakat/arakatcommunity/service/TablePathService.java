@@ -1,15 +1,20 @@
 package io.github.arakat.arakatcommunity.service;
 
 import io.github.arakat.arakatcommunity.config.AppPropertyValues;
+import io.github.arakat.arakatcommunity.model.ColumnResponse;
 import io.github.arakat.arakatcommunity.model.TablePath;
 import io.github.arakat.arakatcommunity.repository.TablePathRepository;
 import io.github.arakat.arakatcommunity.utils.RequestUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class TablePathService {
@@ -43,8 +48,8 @@ public class TablePathService {
     }
 
     public Object getColumnsByTablePath(String tablePath) {
-        String uri = appPropertyValues.getHdfsReaderUrl() + ":" + appPropertyValues.getHdfsReaderPort()
-                + "/" + appPropertyValues.getHdfsReaderGetTableColumnsEndpoint();
+        String uri = appPropertyValues.getSparkHdfsHelperUrl() + ":" + appPropertyValues.getSparkHdfsHelperPort()
+                + "/" + appPropertyValues.getSparkHdfsHelperGetTableColumnsEndpoint();
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("file", tablePath);
@@ -53,8 +58,8 @@ public class TablePathService {
     }
 
     public JSONObject getDataBySpecificQuery(String tablePath, String columns) {
-        String uri = appPropertyValues.getHdfsReaderUrl() + ":" + appPropertyValues.getHdfsReaderPort()
-                + "/" + appPropertyValues.getHdfsReaderGetDataEndpoint();
+        String uri = appPropertyValues.getSparkHdfsHelperUrl() + ":" + appPropertyValues.getSparkHdfsHelperPort()
+                + "/" + appPropertyValues.getSparkHdfsHelperGetDataEndpoint();
 
         String tableTempView = FilenameUtils.getBaseName(tablePath);
         String query = "SELECT " + columns + " FROM " + tableTempView;
@@ -70,16 +75,24 @@ public class TablePathService {
         return new JSONObject(response.toString());
     }
 
-    public String getTableColumnsWithTypes(String tablePath) {
-        String uri = appPropertyValues.getHdfsReaderUrl() + ":" + appPropertyValues.getHdfsReaderPort()
-                + "/" + appPropertyValues.getHdfsReaderGetTableColumnsWIthTypesEndpoint();
+    public List<ColumnResponse> getTableColumnsWithTypes(String tablePath) {
+        String uri = appPropertyValues.getSparkHdfsHelperUrl() + ":" + appPropertyValues.getSparkHdfsHelperPort()
+                + "/" + appPropertyValues.getSparkHdfsHelperGetTableColumnsWithTypesEndpoint();
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("file", tablePath);
 
-        Object response = requestUtils.sendPostRequest(uri, map);
+        JSONArray response = new JSONArray(requestUtils.sendPostRequest(uri, map).toString());
+        List<ColumnResponse> columnResponseList = new ArrayList<>();
 
-        return response.toString();
+        for(Object column : response) {
+            String columnName = new JSONObject(column.toString()).get("column").toString();
+            String columnType = new JSONObject(column.toString()).get("columnType").toString();
+
+            columnResponseList.add(new ColumnResponse(columnName, columnType));
+        }
+
+        return columnResponseList;
     }
 
     public TablePath getTablePathById(Long tablePathId) {
