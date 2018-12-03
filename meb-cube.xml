@@ -1,0 +1,26 @@
+<Schema name="MEB">
+  <Cube name="MEBCUBE" visible="true" cache="true" enabled="true">
+    <Table name="CUBE_IL_ILCE_OKUL_F" schema="OLAPTRAIN" alias="okul_fact">
+    </Table>
+    <Dimension type="StandardDimension" visible="true" foreignKey="IL_ID" name="okul_bolge">
+      <Hierarchy name="il" visible="true" hasAll="true" allMemberName="all il" primaryKey="IL_ID">
+        <Table name="CUBE_IL_D" schema="OLAPTRAIN" alias="il">
+        </Table>
+        <Level name="il_adi" visible="true" column="IL_ADI" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Dimension type="StandardDimension" visible="true" foreignKey="OKUL_TNM_TIPI" name="okul_turu">
+      <Hierarchy name="tur" visible="true" hasAll="true" allMemberName="all_tur" primaryKey="OKUL_TIP_KOD">
+        <Table name="CUBE_OKUL_TIP_D" schema="OLAPTRAIN">
+        </Table>
+        <Level name="tur_kodu" visible="true" column="OKUL_TIP_KOD" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Measure name="TOP_YEM_GND_ODNK" column="TOP_YEM_GND_ODNK" datatype="Numeric" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="TOP_YEM_YI_OGR_SAY" column="TOP_YEM_YI_OGR_SAYI" datatype="Numeric" aggregator="sum" visible="true">
+    </Measure>
+  </Cube>
+</Schema>
